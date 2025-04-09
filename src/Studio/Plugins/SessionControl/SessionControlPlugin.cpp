@@ -37,7 +37,7 @@ using namespace Core;
 // constructor
 SessionControlPlugin::SessionControlPlugin() : Plugin(GetStaticTypeUuid())
 {
-	LogDetailedInfo("Constructing session control plugin ...");
+	LogDetailedInfo("SessionControlPlugin: Constructor called.");
 
 	mSessionInfoWidget		 = NULL;
 	mClientInfoWidget		 = NULL;
@@ -53,7 +53,7 @@ SessionControlPlugin::SessionControlPlugin() : Plugin(GetStaticTypeUuid())
 // destructor
 SessionControlPlugin::~SessionControlPlugin()
 {
-	LogDetailedInfo("Destructing session control plugin ...");
+	LogDetailedInfo("SessionControlPlugin: Destructor called.");
 
 	CORE_EVENTMANAGER.RemoveEventHandler(this);
 }
@@ -62,7 +62,7 @@ SessionControlPlugin::~SessionControlPlugin()
 // init after the parent dock window has been created
 bool SessionControlPlugin::Init()
 {
-	LogDetailedInfo("Initializing session control plugin ...");
+	LogDetailedInfo("SessionControlPlugin: Init() called.");
 
 	QWidget* mainWidget = new QWidget();
 	QVBoxLayout* mainLayout = new QVBoxLayout();
@@ -147,7 +147,7 @@ bool SessionControlPlugin::Init()
 	// register with event handler
 	CORE_EVENTMANAGER.AddEventHandler(this);
 
-	LogDetailedInfo("Session control plugin successfully initialized");
+	LogDetailedInfo("SessionControlPlugin: Init() completed successfully.");
 
 	return true;
 }
@@ -155,6 +155,7 @@ bool SessionControlPlugin::Init()
 
 void SessionControlPlugin::ReInit()
 {
+	LogDetailedInfo("SessionControlPlugin: ReInit() called.");
 	// reinit widgets
 	mPreSessionWidget->ReInit();
 	mStageControlWidget->ReInit();
@@ -165,12 +166,14 @@ void SessionControlPlugin::ReInit()
 	UpdateInterface();
 	UpdateWidgets();
 	UpdateStartButton();
+	LogDetailedInfo("SessionControlPlugin: ReInit() completed.");
 }
 
 
 // update interface information
 void SessionControlPlugin::UpdateInterface()
 {
+	LogDebug("SessionControlPlugin: UpdateInterface() called.");
 	// propagate interface update to widgets
 	mWhileSessionWidget->UpdateInterface();
 	mStageControlWidget->UpdateInterface();
@@ -202,12 +205,14 @@ void SessionControlPlugin::UpdateInterface()
 	
 	CheckStartRequirements();
 	UpdateStartButton();
+	LogDebug("SessionControlPlugin: UpdateInterface() completed.");
 }
 
 
 // update the buttons
 void SessionControlPlugin::UpdateWidgets()
 {
+	LogDebug("SessionControlPlugin: UpdateWidgets() called.");
 	// no starter and no vis -> show error widget
 	if (GetNetworkServer()->GetNumClients() == 0)
 	{
@@ -237,11 +242,13 @@ void SessionControlPlugin::UpdateWidgets()
 		mWhileSessionWidget->hide();
 		mPreSessionWidget->show();
 	}
+	LogDebug("SessionControlPlugin: UpdateWidgets() completed.");
 }
 
 
 void SessionControlPlugin::OnPreparedSession()
 {
+	LogDetailedInfo("SessionControlPlugin: OnPreparedSession() called.");
 	if (Classifier* c = GetEngine()->GetActiveClassifier())
 	{
 		if (StateMachine* activeStateMachine = GetEngine()->GetActiveStateMachine())
@@ -251,11 +258,13 @@ void SessionControlPlugin::OnPreparedSession()
 	}
 	else
 		Reset();
+	LogDetailedInfo("SessionControlPlugin: OnPreparedSession() completed.");
 }
 
 
 void SessionControlPlugin::OnSessionUserChanged(const User& user)
 {
+	LogDetailedInfo("SessionControlPlugin: OnSessionUserChanged() called.");
 	String name = user.CreateDisplayableName();
 	
 	// append space due to stylesheet problems (no margins!)
@@ -263,37 +272,46 @@ void SessionControlPlugin::OnSessionUserChanged(const User& user)
 
 	QPushButton* userButton = mPreSessionWidget->GetSelectUserButton();
 	userButton->setText(name.AsChar());
+	LogDetailedInfo("SessionControlPlugin: OnSessionUserChanged() completed.");
 }
 
 void SessionControlPlugin::OnActiveBciChanged(BciDevice* device)
 {
-
+	LogDetailedInfo("SessionControlPlugin: OnActiveBciChanged() called.");
+	LogDetailedInfo("SessionControlPlugin: OnActiveBciChanged() completed.");
 }
 
 void SessionControlPlugin::OnActiveClassifierChanged(Classifier* classifier)
 {
+	LogDetailedInfo("SessionControlPlugin: OnActiveClassifierChanged() called.");
    UpdateStartButton();
    mPreSessionWidget->UpdateChannels(0);
+   LogDetailedInfo("SessionControlPlugin: OnActiveClassifierChanged() completed.");
 }
 
 void SessionControlPlugin::OnNodeStarted(Graph* graph, SPNode* node)
 {
+	LogDetailedInfo("SessionControlPlugin: OnNodeStarted() called.");
    if (mPreSessionWidget)
       if (node->GetType() == ChannelSelectorNode::TYPE_ID)
          if (node->GetBoolAttribute(ChannelSelectorNode::ATTRIB_QUICK_CONFIG))
             mPreSessionWidget->UpdateChannels((ChannelSelectorNode*)node);
+   LogDetailedInfo("SessionControlPlugin: OnNodeStarted() completed.");
 }
 
 void SessionControlPlugin::OnRemoveNode(Graph* graph, Node* node)
 {
+	LogDetailedInfo("SessionControlPlugin: OnRemoveNode() called.");
    if (mPreSessionWidget)
       if (node->GetType() == ChannelSelectorNode::TYPE_ID)
          if (node->GetBoolAttribute(ChannelSelectorNode::ATTRIB_QUICK_CONFIG))
             mPreSessionWidget->UpdateChannels(0);
+   LogDetailedInfo("SessionControlPlugin: OnRemoveNode() completed.");
 }
 
 void SessionControlPlugin::OnAttributeUpdated(Graph* graph, GraphObject* object, Core::Attribute* attribute)
 {
+	LogDebug("SessionControlPlugin: OnAttributeUpdated() called.");
    if (mPreSessionWidget)
       if (object->GetType() == ChannelSelectorNode::TYPE_ID)
          if (attribute == object->GetAttributeValue(ChannelSelectorNode::ATTRIB_QUICK_CONFIG))
@@ -301,34 +319,42 @@ void SessionControlPlugin::OnAttributeUpdated(Graph* graph, GraphObject* object,
                mPreSessionWidget->UpdateChannels((ChannelSelectorNode*)object);
             else
                mPreSessionWidget->UpdateChannels(0);
+   LogDebug("SessionControlPlugin: OnAttributeUpdated() completed.");
 }
 
 void SessionControlPlugin::OnRemoveDevice(Device* device)
 { 
+	LogDetailedInfo("SessionControlPlugin: OnRemoveDevice() called.");
 	if (GetSession()->IsRunning() == true) 
 		mLostDeviceError = true;
+	LogDetailedInfo("SessionControlPlugin: OnRemoveDevice() completed.");
 }
 
 
 void SessionControlPlugin::UpdateStartButton()
 {
+	LogDetailedInfo("SessionControlPlugin: UpdateStartButton() called.");
 	if (mPreSessionWidget == NULL)
 		return;
 
 	mPreSessionWidget->GetStartButton()->setEnabled(mCanStartSession);
+	LogDetailedInfo("SessionControlPlugin: UpdateStartButton() completed.");
 }
 
 
 // a client was added or modified
 void SessionControlPlugin::OnClientChanged( NetworkServerClient* client)
 {
+	LogDetailedInfo("SessionControlPlugin: OnClientChanged() called.");
 	ReInit();
+	LogDetailedInfo("SessionControlPlugin: OnClientChanged() completed.");
 }
 
 
 // a client was removed
 void SessionControlPlugin::OnClientRemoved( NetworkServerClient* client)
 {
+	LogDetailedInfo("SessionControlPlugin: OnClientRemoved() called.");
 	// early exit
 	if (mLostClientError == true || GetSession()->IsRunning() == false)
 		return;
@@ -340,12 +366,14 @@ void SessionControlPlugin::OnClientRemoved( NetworkServerClient* client)
 			mLostClientError = true;
 
 	ReInit();
+	LogDetailedInfo("SessionControlPlugin: OnClientRemoved() completed.");
 }
 
 // TODO this is disable until we have meaningfull messages from the clients other than the client config message
 // react on event messages from studio
 void SessionControlPlugin::OnMessageReceived( NetworkServerClient* client, NetworkMessage* message )
 {
+	LogDetailedInfo("SessionControlPlugin: OnMessageReceived() called.");
 	CORE_ASSERT( client != NULL );
 	//if (client == mVisualizationClient || client == mStarterClient)
 	//{
@@ -375,15 +403,19 @@ void SessionControlPlugin::OnMessageReceived( NetworkServerClient* client, Netwo
 
 	// message must be deleted after is was processed
 	delete message;
+	LogDetailedInfo("SessionControlPlugin: OnMessageReceived() completed.");
 }
 
 void SessionControlPlugin::OnSelectedChannelsChanged()
 {
+	LogDetailedInfo("SessionControlPlugin: OnSelectedChannelsChanged() called.");
    ApplySettings();
+   LogDetailedInfo("SessionControlPlugin: OnSelectedChannelsChanged() completed.");
 }
 
 void SessionControlPlugin::CheckStartRequirements()
 {
+	LogDetailedInfo("SessionControlPlugin: CheckStartRequirements() called.");
 	Experience* experience = GetEngine()->GetActiveExperience();
 	Classifier* classifier = GetEngine()->GetActiveClassifier();
 	StateMachine* stateMachine = GetEngine()->GetActiveStateMachine();
@@ -499,11 +531,13 @@ void SessionControlPlugin::CheckStartRequirements()
 		else
 			mSessionInfoWidget->RemoveInfo( designErrorInfo );
 	}
+	LogDetailedInfo("SessionControlPlugin: CheckStartRequirements() completed.");
 }
 
 // start session
 void SessionControlPlugin::OnStart()
 {
+	LogDetailedInfo("SessionControlPlugin: OnStart() called.");
 	Classifier* activeClassifier = GetEngine()->GetActiveClassifier();
 	StateMachine* activeStateMachine = GetEngine()->GetActiveStateMachine();
 	Experience* activeExperience = GetEngine()->GetActiveExperience();
@@ -555,11 +589,13 @@ void SessionControlPlugin::OnStart()
 
 	// load parameters
 	GetBackendInterface()->GetParameters()->Load(true, *GetSessionUser(), activeExperience, activeClassifier);
+	LogDetailedInfo("SessionControlPlugin: OnStart() completed.");
 }
 
 
 void SessionControlPlugin::OnParametersLoaded(bool success)
 {
+	LogDetailedInfo("SessionControlPlugin: OnParametersLoaded() called.");
 	// error occured while loading parameters
 	if (success == false)
 	{
@@ -585,11 +621,13 @@ void SessionControlPlugin::OnParametersLoaded(bool success)
 	// but keep the statemachine paused until session really starts
 	if (StateMachine* sm = GetEngine()->GetActiveStateMachine())
 		sm->Pause();
+	LogDetailedInfo("SessionControlPlugin: OnParametersLoaded() completed.");
 }
 
 
 void SessionControlPlugin::ApplySettings()
 {
+	LogDetailedInfo("SessionControlPlugin: ApplySettings() called.");
    Classifier* activeClassifier = GetEngine()->GetActiveClassifier();
    StateMachine* activeStateMachine = GetEngine()->GetActiveStateMachine();
    Experience* activeExperience = GetEngine()->GetActiveExperience();
@@ -620,11 +658,13 @@ void SessionControlPlugin::ApplySettings()
       activeClassifier->SetIsDirty(dirty);
       activeClassifier->SetUseSettings(settingsmode);
    }
+   LogDetailedInfo("SessionControlPlugin: ApplySettings() completed.");
 }
 
 
 void SessionControlPlugin::Start()
 {
+	LogDetailedInfo("SessionControlPlugin: Start() called.");
 	GetSession()->Reset();
 	GetSession()->Start();
 
@@ -633,11 +673,13 @@ void SessionControlPlugin::Start()
 
 	mPreSessionWidget->setEnabled(true);
 	mPreSessionWidget->GetShowReportButton()->setVisible(false);
+	LogDetailedInfo("SessionControlPlugin: Start() completed.");
 }
 
 
 void SessionControlPlugin::Reset()
 {
+	LogDetailedInfo("SessionControlPlugin: Reset() called.");
 	GetSession()->Stop();
 	GetSession()->Reset();
 
@@ -648,12 +690,16 @@ void SessionControlPlugin::Reset()
 	
 	mLostClientError = false;
 	mLostDeviceError= false;
+	LogDetailedInfo("SessionControlPlugin: Reset() completed.");
 }
 
 
 // stop session
 void SessionControlPlugin::OnStop()
 {
+	LogDetailedInfo("SessionControlPlugin: OnStop() called.");
+	LogDetailedInfo("SessionControlPlugin::OnStop()");
+
 	mWhileSessionWidget->setEnabled(false);
 
 	// make sure the session is running
@@ -681,6 +727,8 @@ void SessionControlPlugin::OnStop()
 	}
 
 	// update the interface
+	LogDetailedInfo("SessionControlPlugin::OnStop() - UpdateWidgets()");
+
 	UpdateWidgets();
 
 	Classifier* activeClassifier = GetEngine()->GetActiveClassifier();
@@ -690,6 +738,8 @@ void SessionControlPlugin::OnStop()
 	////////////////////////////////////////
 	// start backend parameter upload
 	////////////////////////////////////////
+	LogDetailedInfo("SessionControlPlugin::OnStop() - GetBackendInterface()->GetParameters()->Save");
+
 	GetBackendInterface()->GetParameters()->Save(*GetSessionUser(), *GetSession(), activeExperience, activeClassifier);
 
 	////////////////////////////////////////
@@ -763,12 +813,14 @@ void SessionControlPlugin::OnStop()
 			}
 		}
 	});
+	LogDetailedInfo("SessionControlPlugin: OnStop() completed.");
 }
 
 
 // pause session: soft-pause the engine
 void SessionControlPlugin::OnPause()
 {
+	LogDetailedInfo("SessionControlPlugin: OnPause() called.");
 	// pause engine
 	GetEngine()->SoftPause();
 
@@ -777,12 +829,14 @@ void SessionControlPlugin::OnPause()
 
 	// update the interface
 	UpdateWidgets();
+	LogDetailedInfo("SessionControlPlugin: OnPause() completed.");
 }
 
 
 // pause session: soft-pause the engine
 void SessionControlPlugin::OnContinue()
 {
+	LogDetailedInfo("SessionControlPlugin: OnContinue() called.");
 	// pause engine
 	GetEngine()->SoftContinue();
 
@@ -791,11 +845,13 @@ void SessionControlPlugin::OnContinue()
 
 	// update the interface
 	UpdateWidgets();
+	LogDetailedInfo("SessionControlPlugin: OnContinue() completed.");
 }
 
 
 void SessionControlPlugin::OnParametersSaved(bool success)
 {
+	LogDetailedInfo("SessionControlPlugin: OnParametersSaved() called.");
 	// something didn't work
 	if (success == false)
 	{
@@ -811,20 +867,24 @@ void SessionControlPlugin::OnParametersSaved(bool success)
 
 	// enable widget again
 	mWhileSessionWidget->setEnabled(true);
+	LogDetailedInfo("SessionControlPlugin: OnParametersSaved() completed.");
 }
 
 
 void SessionControlPlugin::UpdateShowReportButton()
 {
+	LogDetailedInfo("SessionControlPlugin: UpdateShowReportButton() called.");
 	QPushButton* showReportButton = mPreSessionWidget->GetShowReportButton();
 	
 	const bool isVisible = (mReportSessionId.IsEmpty() == false);
 	showReportButton->setVisible(isVisible);
+	LogDetailedInfo("SessionControlPlugin: UpdateShowReportButton() completed.");
 }
 
 
 void SessionControlPlugin::ShowReport()
 {
+	LogDetailedInfo("SessionControlPlugin: ShowReport() called.");
 	// this is a duplicate from ReportWindow
 
 	if (mReportSessionId.IsEmpty() == true)
@@ -839,11 +899,13 @@ void SessionControlPlugin::ShowReport()
 
 	// start-up the online statistics in the default browser
 	QDesktopServices::openUrl(QUrl(finalUrl.AsChar()));
+	LogDetailedInfo("SessionControlPlugin: ShowReport() completed.");
 }
 
 // called after switching layout
 void SessionControlPlugin::OnAfterLoadLayout()
 {
+	LogDetailedInfo("SessionControlPlugin: OnAfterLoadLayout() called.");
 	/*if (GetUser()->FindRule("STUDIO_SETTING_EasyWorkflow") != NULL)
 	{
 		// open visualization select window if one is available and none is running
@@ -854,4 +916,5 @@ void SessionControlPlugin::OnAfterLoadLayout()
 			selectVizWindow.exec();
 		}
 	}*/
+	LogDetailedInfo("SessionControlPlugin: OnAfterLoadLayout() completed.");
 }
