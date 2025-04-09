@@ -33,24 +33,36 @@ using namespace Core;
 // constructor
 ViewWidget::ViewWidget(ViewPlugin* plugin, QWidget* parent) : OpenGLWidget(parent)
 {
+	mPlugin = plugin;
 	mRenderCallback = new RenderCallback(this, this);
-	SetCallback( mRenderCallback );
 
-	mLeftTextWidth		= 0.0;
-	mPlugin				= plugin;
-	mEmptyText			= "No signals";
+	// Ensure mRenderCallback is valid before setting it
+	if (mRenderCallback != nullptr)
+		SetCallback(mRenderCallback);
+
+	mLeftTextWidth = 0.0;
+	mEmptyText = "No signals";
 }
 
 
 // destructor
 ViewWidget::~ViewWidget()
 {
-	delete mRenderCallback;
+	// Safely delete mRenderCallback
+	if (mRenderCallback != nullptr)
+	{
+		delete mRenderCallback;
+		mRenderCallback = nullptr;
+	}
 }
 
 
 Classifier* ViewWidget::GetClassifier() const
 {
+	// Ensure the engine is valid before accessing it
+	if (GetEngine() == nullptr)
+		return nullptr;
+
 	return GetEngine()->GetActiveClassifier();
 }
 
@@ -58,14 +70,29 @@ Classifier* ViewWidget::GetClassifier() const
 // render frame
 void ViewWidget::paintGL()
 {
-	uint32 numMultiChannels = 0;
+	// Ensure mPlugin and mRenderCallback are valid
+	if (mPlugin == nullptr || mRenderCallback == nullptr)
+	{
+		LogError("Invalid plugin or render callback. Skipping paintGL.");
+		ResetPerformanceStatsPos();
+		return;
+	}
+
+	// Limit the number of multi-channels rendered to prevent excessive processing
+	uint32 numMultiChannels = mPlugin->GetNumMultiChannels();
+	const uint32 maxRenderChannels = 50; // Arbitrary safety limit
+	if (numMultiChannels > maxRenderChannels)
+	{
+		LogWarning("Too many multi-channels to render. Limiting to prevent freeze.");
+		numMultiChannels = maxRenderChannels;
+	}
+
 	Classifier* classifier = GetClassifier();
-	if (classifier != NULL)
+	if (classifier != nullptr)
 	{
 		double maxTextWidth = 0.0;
 
 		// get the channels to render
-		numMultiChannels = mPlugin->GetNumMultiChannels();
 		for (uint32 i = 0; i<numMultiChannels; ++i)
 		{
 			const MultiChannel& channels = mPlugin->GetMultiChannel(i);
@@ -97,6 +124,9 @@ void ViewWidget::paintGL()
 
 	// initialize the painter and get the font metrics
 	QPainter painter(this);
+	if (!painter.isActive())
+		return;
+
 	mRenderCallback->SetPainter( &painter );
 	painter.setRenderHint(QPainter::Antialiasing);
 	painter.setRenderHint(QPainter::HighQualityAntialiasing);
@@ -114,18 +144,37 @@ void ViewWidget::paintGL()
 
 void ViewWidget::RenderCallback::Render(uint32 index, bool isHighlighted, double x, double y, double width, double height)
 {
-	//Classifier* classifier = mViewWidget->GetClassifier();
+	// Ensure mViewWidget and plugin are valid
+	if (mViewWidget == nullptr || mViewWidget->GetPlugin() == nullptr)
+	{
+		LogError("Invalid view widget or plugin in RenderCallback. Skipping render.");
+		return;
+	}
+
+	// Add a safety limit for rendering channels
+	const uint32 maxChannels = 100; // Arbitrary safety limit
+	if (index >= maxChannels)
+	{
+		LogWarning("Channel index exceeds safety limit. Skipping render.");
+		return;
+	}
+
 	ViewPlugin* plugin = mViewWidget->GetPlugin();
 
-	double maxTime = plugin->GetFixedLength() * 60; // fixed length is kept in mins
-	double timeRange = plugin->GetTimeRange();
-	if (maxTime < 0.)
-		maxTime = GetEngine()->GetElapsedTime().InSeconds();
+	double maxTime = plugin->GetFixedLength();
+	if (maxTime > 0)
+		maxTime *= 60; // Convert minutes to seconds
 	else
+		maxTime = GetEngine()->GetElapsedTime().InSeconds();
+
+	double timeRange = plugin->GetTimeRange();
+	if (maxTime < 0.0)
 		timeRange = maxTime;
 	
 	// get channel and its properties
 	const MultiChannel& channels = plugin->GetMultiChannel(index);
+	if (channels.GetNumChannels() == 0)
+		return;
 	
 	// channel signal range
 	double rangeMin = channels.GetMinValue();
@@ -248,6 +297,10 @@ void ViewWidget::RenderCallback::Render(uint32 index, bool isHighlighted, double
 
 void ViewWidget::RenderCallback::RenderTimeline(double x, double y, double width, double height)
 {
+	// Ensure mViewWidget and plugin are valid
+	if (mViewWidget == nullptr || mViewWidget->GetPlugin() == nullptr)
+		return;
+
 	// base class render
 	OpenGLWidgetCallback::RenderTimeline( x, y, width, height );
 
@@ -269,12 +322,14 @@ void ViewWidget::RenderCallback::RenderTimeline(double x, double y, double width
 
 	double maxTime = plugin->GetFixedLength();
 	bool scaleInMins = false;
-	if (maxTime < 0.)
-		maxTime = GetEngine()->GetElapsedTime().InSeconds();
-	else
+	if (maxTime > 0.0)
 	{
 		scaleInMins = true;
-		timeRange = maxTime;
+		maxTime *= 60; // Convert minutes to seconds
+	}
+	else
+	{
+		maxTime = GetEngine()->GetElapsedTime().InSeconds();
 	}
 	
 	OpenGLWidget2DHelpers::RenderTimeline( this, FromQtColor(color), timeRange, maxTime, areaStartX, y, areaWidth, height, mTempString, scaleInMins);

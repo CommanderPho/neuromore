@@ -34,7 +34,7 @@ using namespace Core;
 ViewPlugin::ViewPlugin() : Plugin(GetStaticTypeUuid())
 {
 	LogDetailedInfo("Constructing Signal View plugin ...");
-	mViewWidget			= NULL;
+	mViewWidget = nullptr;
 }
 
 
@@ -42,7 +42,16 @@ ViewPlugin::ViewPlugin() : Plugin(GetStaticTypeUuid())
 ViewPlugin::~ViewPlugin()
 {
 	LogDetailedInfo("Destructing Signal View plugin ...");
+
+	// Safely remove event handler
 	CORE_EVENTMANAGER.RemoveEventHandler(this);
+
+	// Safely delete mViewWidget
+	if (mViewWidget != nullptr)
+	{
+		delete mViewWidget;
+		mViewWidget = nullptr;
+	}
 }
 
 
@@ -101,6 +110,20 @@ bool ViewPlugin::Init()
 
 	connect(attributeSetGridWidget->GetPropertyManager(), SIGNAL(ValueChanged(Property*)), this, SLOT(OnAttributeChanged(Property*)));
 
+	// Ensure mViewWidget is valid before using it
+	if (mViewWidget == nullptr)
+	{
+		LogError("Failed to initialize ViewWidget.");
+		return false;
+	}
+
+	// Limit the number of multi-channels processed to avoid excessive resource usage
+	uint32 maxMultiChannels = 100; // Arbitrary limit for safety
+	if (GetNumMultiChannels() > maxMultiChannels)
+	{
+		LogError("Too many multi-channels detected. Limiting to prevent application freeze.");
+		return false;
+	}
 
 	return true;
 }
@@ -154,17 +177,30 @@ void ViewPlugin::OnAttributeChanged(Property* property)
 uint32 ViewPlugin::GetNumMultiChannels()
 {
 	Classifier* classifier = GetEngine()->GetActiveClassifier();
-	if (classifier == NULL)
+	if (classifier == nullptr)
 		return 0;
 
-	return classifier->GetNumViewMultiChannels();
+	// Limit the number of multi-channels to prevent excessive processing
+	uint32 numMultiChannels = classifier->GetNumViewMultiChannels();
+	const uint32 maxAllowedChannels = 100; // Arbitrary safety limit
+	if (numMultiChannels > maxAllowedChannels)
+	{
+		LogWarning("Number of multi-channels exceeds safety limit. Limiting to prevent freeze.");
+		return maxAllowedChannels;
+	}
+
+	return numMultiChannels;
 }
 
 
 const MultiChannel& ViewPlugin::GetMultiChannel(uint32 index)
 {
 	Classifier* classifier = GetEngine()->GetActiveClassifier();
-	CORE_ASSERT(classifier);
+	if (classifier == nullptr || index >= classifier->GetNumViewMultiChannels())
+	{
+		static MultiChannel emptyChannel;
+		return emptyChannel;
+	}
 
 	return classifier->GetViewMultiChannel(index);
 }
@@ -173,22 +209,34 @@ const MultiChannel& ViewPlugin::GetMultiChannel(uint32 index)
 Core::Color ViewPlugin::GetChannelColor(uint32 multichannel, uint32 index)
 {
 	Classifier* classifier = GetEngine()->GetActiveClassifier();
-	CORE_ASSERT(classifier);
+	if (classifier == nullptr || multichannel >= classifier->GetNumViewMultiChannels())
+		return Core::Color(); // Return default color
 
 	const ViewNode& node = classifier->GetViewNodeForMultiChannel(multichannel);
 	if (node.CustomColor() == true)
 		return node.GetCustomColor();
-	
-	return classifier->GetViewMultiChannel(multichannel).GetChannel(index)->GetColor();
+
+	const MultiChannel& multiChannel = classifier->GetViewMultiChannel(multichannel);
+	if (index >= multiChannel.GetNumChannels())
+		return Core::Color();
+
+	return multiChannel.GetChannel(index)->GetColor();
 }
 
 
 void ViewPlugin::SetViewDuration(double seconds)
 {
-
 	Classifier* classifier = GetEngine()->GetActiveClassifier();
-	if (classifier == NULL)
+	if (classifier == nullptr)
 		return;
+
+	// Set a maximum allowed view duration to prevent excessive processing
+	const double maxDuration = 3600.0; // 1 hour
+	if (seconds > maxDuration)
+	{
+		LogWarning("Requested view duration exceeds maximum allowed. Clamping to safety limit.");
+		seconds = maxDuration;
+	}
 
 	// set view duration of all view nodes in the classifier (always, even if the view mode is different)
 	const uint32 numViewNodes = classifier->GetNumViewNodes();
@@ -199,15 +247,16 @@ void ViewPlugin::SetViewDuration(double seconds)
 double ViewPlugin::GetFixedLength()
 {
 	Classifier* classifier = GetEngine()->GetActiveClassifier();
-	CORE_ASSERT(classifier);
+	if (classifier == nullptr)
+		return -1.0;
 
 	const uint32 numViewNodes = classifier->GetNumViewNodes();
-	for (uint32 i=0; i<numViewNodes; ++i)
+	for (uint32 i = 0; i < numViewNodes; ++i)
 	{
 		double fixedLength = classifier->GetViewNode(i)->GetFixedLength();
-		if (fixedLength > 0.)
+		if (fixedLength > 0.0)
 			return fixedLength;
 	}
-	return -1.;
+	return -1.0;
 }
 
