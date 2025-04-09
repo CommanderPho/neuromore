@@ -1,4 +1,3 @@
-
 /* pngrtran.c - transforms the data in a row for PNG readers
  *
  * Copyright (c) 2018-2019 Cosmin Truta
@@ -17,6 +16,7 @@
  */
 
 #include "pngpriv.h"
+#include <math.h> // Include the math library for floor and other math functions
 
 #ifdef PNG_ARM_NEON_IMPLEMENTATION
 #  if PNG_ARM_NEON_IMPLEMENTATION == 1

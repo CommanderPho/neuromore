@@ -151,7 +151,8 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #    if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
 #      include <unix.h> /* for fdopen */
 #    else
-#      ifndef fdopen
+#      /* Avoid redefining fdopen if it is already defined by the standard library */
+#      if !defined(fdopen) && !defined(__DARWIN_ALIAS_STARTING)
 #        define fdopen(fd,mode) NULL /* No fdopen() */
 #      endif
 #    endif
@@ -174,7 +175,8 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #  define OS_CODE 18
 #endif
 
-#ifdef __APPLE__
+/* Avoid redefining OS_CODE if it is already defined */
+#ifndef OS_CODE
 #  define OS_CODE 19
 #endif
 
@@ -288,5 +290,10 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #else
 #define zalign(x) __attribute__((aligned((x))))
 #endif
+
+#ifdef fdopen
+#undef fdopen
+#endif
+#define zlib_fdopen(fd, mode) NULL /* No fdopen() */
 
 #endif /* ZUTIL_H */

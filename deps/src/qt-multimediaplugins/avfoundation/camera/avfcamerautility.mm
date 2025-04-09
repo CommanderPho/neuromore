@@ -85,7 +85,7 @@ inline bool qt_area_sane(const QSize &size)
            && std::numeric_limits<int>::max() / size.width() >= size.height();
 }
 
-struct ResolutionPredicate : std::binary_function<AVCaptureDeviceFormat *, AVCaptureDeviceFormat *, bool>
+struct ResolutionPredicate : std::__binary_function<AVCaptureDeviceFormat *, AVCaptureDeviceFormat *, bool>
 {
     bool operator() (AVCaptureDeviceFormat *f1, AVCaptureDeviceFormat *f2)const
     {
@@ -96,7 +96,7 @@ struct ResolutionPredicate : std::binary_function<AVCaptureDeviceFormat *, AVCap
     }
 };
 
-struct FormatHasNoFPSRange : std::unary_function<AVCaptureDeviceFormat *, bool>
+struct FormatHasNoFPSRange : std::__unary_function<AVCaptureDeviceFormat *, bool>
 {
     bool operator() (AVCaptureDeviceFormat *format)
     {

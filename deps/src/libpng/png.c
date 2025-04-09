@@ -1,4 +1,3 @@
-
 /* png.c - location for general purpose libpng functions
  *
  * Copyright (c) 2018-2019 Cosmin Truta
@@ -12,6 +11,7 @@
  */
 
 #include "pngpriv.h"
+#include <math.h> // Include the math library for frexp, modf, floor, and pow
 
 /* Generate a compiler error if there is an old png.h in the search path. */
 typedef png_libpng_version_1_6_37 Your_png_h_is_not_version_1_6_37;

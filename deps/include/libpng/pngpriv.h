@@ -1,4 +1,3 @@
-
 /* pngpriv.h - private declarations for use inside libpng
  *
  * Copyright (c) 2018-2019 Cosmin Truta
@@ -524,7 +523,15 @@
     * <fp.h> if possible.
     */
 #    if !defined(__MATH_H__) && !defined(__MATH_H) && !defined(__cmath__)
-#      include <fp.h>
+/* Include fp.h only if it exists */
+#ifdef __has_include
+#  if __has_include(<fp.h>)
+#    include <fp.h>
+#  endif
+#else
+#  include <fp.h> /* Fallback for compilers without __has_include */
+#endif
+
 #    endif
 #  else
 #    include <math.h>
@@ -1283,8 +1290,6 @@ PNG_INTERNAL_FUNCTION(void,png_combine_row,(png_const_structrp png_ptr,
 PNG_INTERNAL_FUNCTION(void,png_do_read_interlace,(png_row_infop row_info,
     png_bytep row, int pass, png_uint_32 transformations),PNG_EMPTY);
 #endif
-
-/* GRR TO DO (2.0 or whenever):  simplify other internal calling interfaces */
 
 #ifdef PNG_WRITE_INTERLACING_SUPPORTED
 /* Grab pixels out of a row for an interlaced pass */
