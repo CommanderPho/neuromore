@@ -33,7 +33,7 @@
 #include "Windows/SettingsWindow.h"
 #include "Windows/LicenseAgreementWindow.h"
 #include "Windows/EnterLabelWindow.h"
-#include "Windows/SelectUserWindow.h
+#include "Windows/SelectUserWindow.h"
 #include <LayoutManager.h>
 #include <LayoutComboBox.h>
 #include <LayoutMenu.h>
