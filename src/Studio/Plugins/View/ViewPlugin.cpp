@@ -33,7 +33,6 @@ using namespace Core;
 // constructor
 ViewPlugin::ViewPlugin() : Plugin(GetStaticTypeUuid())
 {
-	LogDebug("ViewPlugin: Constructor called.");
 	LogDetailedInfo("Constructing Signal View plugin ...");
 	mViewWidget			= NULL;
 }
@@ -42,7 +41,6 @@ ViewPlugin::ViewPlugin() : Plugin(GetStaticTypeUuid())
 // destructor
 ViewPlugin::~ViewPlugin()
 {
-	LogDebug("ViewPlugin: Destructor called.");
 	LogDetailedInfo("Destructing Signal View plugin ...");
 	CORE_EVENTMANAGER.RemoveEventHandler(this);
 }
@@ -51,7 +49,6 @@ ViewPlugin::~ViewPlugin()
 // init after the parent dock window has been created
 bool ViewPlugin::Init()
 {
-	LogDebug("ViewPlugin: Init() called.");
 	LogDetailedInfo("Initializing Signal View plugin ...");
 
 	QWidget*		mainWidget		= NULL;
@@ -104,7 +101,7 @@ bool ViewPlugin::Init()
 
 	connect(attributeSetGridWidget->GetPropertyManager(), SIGNAL(ValueChanged(Property*)), this, SLOT(OnAttributeChanged(Property*)));
 
-	LogDebug("ViewPlugin: Init() completed successfully.");
+
 	return true;
 }
 
@@ -112,7 +109,6 @@ bool ViewPlugin::Init()
 // register attributes and create the default values
 void ViewPlugin::RegisterAttributes()
 {
-	LogDebug("ViewPlugin: RegisterAttributes() called.");
 	// register base class attributes
 	Plugin::RegisterAttributes();
 
@@ -139,13 +135,11 @@ void ViewPlugin::RegisterAttributes()
 	attributeShowLatencyMarker->SetDefaultValue( AttributeBool::Create(false) );
 
 	CreateDefaultAttributeValues();
-	LogDebug("ViewPlugin: RegisterAttributes() completed.");
 }
 
 
 void ViewPlugin::OnAttributeChanged(Property* property)
 {
-	LogDebug("ViewPlugin: OnAttributeChanged() called for property '%s'.", property->GetAttributeSettings()->GetInternalName());
 	const String& propertyInternalName = property->GetAttributeSettings()->GetInternalNameString();
 
 	// timerange slider has changed
@@ -154,78 +148,56 @@ void ViewPlugin::OnAttributeChanged(Property* property)
 		const double timerange = property->AsFloat();
 		SetViewDuration(timerange);
 	}
-	LogDebug("ViewPlugin: OnAttributeChanged() completed.");
 }
 
 
 uint32 ViewPlugin::GetNumMultiChannels()
 {
-	LogDebug("ViewPlugin: GetNumMultiChannels() called.");
 	Classifier* classifier = GetEngine()->GetActiveClassifier();
 	if (classifier == NULL)
-	{
-		LogDebug("ViewPlugin: GetNumMultiChannels() completed. - classifier is NULL.");
 		return 0;
-	}
 
-	uint32 numMultiChannels = classifier->GetNumViewMultiChannels();
-	LogDebug("ViewPlugin: GetNumMultiChannels() completed.");
-	return numMultiChannels;
+	return classifier->GetNumViewMultiChannels();
 }
 
 
 const MultiChannel& ViewPlugin::GetMultiChannel(uint32 index)
 {
-	LogDebug("ViewPlugin: GetMultiChannel() called for index %u.", index);
 	Classifier* classifier = GetEngine()->GetActiveClassifier();
 	CORE_ASSERT(classifier);
 
-	const MultiChannel& multiChannel = classifier->GetViewMultiChannel(index);
-	LogDebug("ViewPlugin: GetMultiChannel() completed.");
-	return multiChannel;
+	return classifier->GetViewMultiChannel(index);
 }
 
 
 Core::Color ViewPlugin::GetChannelColor(uint32 multichannel, uint32 index)
 {
-	LogDebug("ViewPlugin: GetChannelColor() called for multichannel %u, index %u.", multichannel, index);
 	Classifier* classifier = GetEngine()->GetActiveClassifier();
 	CORE_ASSERT(classifier);
 
 	const ViewNode& node = classifier->GetViewNodeForMultiChannel(multichannel);
 	if (node.CustomColor() == true)
-	{
-		Core::Color customColor = node.GetCustomColor();
-		LogDebug("ViewPlugin: GetChannelColor() completed.");
-		return customColor;
-	}
+		return node.GetCustomColor();
 	
-	Core::Color channelColor = classifier->GetViewMultiChannel(multichannel).GetChannel(index)->GetColor();
-	LogDebug("ViewPlugin: GetChannelColor() completed.");
-	return channelColor;
+	return classifier->GetViewMultiChannel(multichannel).GetChannel(index)->GetColor();
 }
 
 
 void ViewPlugin::SetViewDuration(double seconds)
 {
-	LogDebug("ViewPlugin: SetViewDuration() called with duration %f seconds.", seconds);
+
 	Classifier* classifier = GetEngine()->GetActiveClassifier();
 	if (classifier == NULL)
-	{
-		LogDebug("ViewPlugin: SetViewDuration() completed. - classifier is NULL.");
 		return;
-	}
 
 	// set view duration of all view nodes in the classifier (always, even if the view mode is different)
 	const uint32 numViewNodes = classifier->GetNumViewNodes();
 	for (uint32 i=0; i<numViewNodes; ++i)
 		classifier->GetViewNode(i)->SetViewDuration(seconds);
-	LogDebug("ViewPlugin: SetViewDuration() completed.");
 }
 
 double ViewPlugin::GetFixedLength()
 {
-	LogDebug("ViewPlugin: GetFixedLength() called.");
 	Classifier* classifier = GetEngine()->GetActiveClassifier();
 	CORE_ASSERT(classifier);
 
@@ -234,12 +206,8 @@ double ViewPlugin::GetFixedLength()
 	{
 		double fixedLength = classifier->GetViewNode(i)->GetFixedLength();
 		if (fixedLength > 0.)
-		{
-			LogDebug("ViewPlugin: GetFixedLength() completed.");
 			return fixedLength;
-		}
 	}
-	LogDebug("ViewPlugin: GetFixedLength() completed.");
 	return -1.;
 }
 

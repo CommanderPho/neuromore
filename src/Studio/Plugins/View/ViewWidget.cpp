@@ -33,30 +33,24 @@ using namespace Core;
 // constructor
 ViewWidget::ViewWidget(ViewPlugin* plugin, QWidget* parent) : OpenGLWidget(parent)
 {
-	LogDebug("ViewWidget: Constructor called.");
 	mRenderCallback = new RenderCallback(this, this);
 	SetCallback( mRenderCallback );
 
 	mLeftTextWidth		= 0.0;
 	mPlugin				= plugin;
 	mEmptyText			= "No signals";
-	LogDebug("ViewWidget: Constructor completed.");
 }
 
 
 // destructor
 ViewWidget::~ViewWidget()
 {
-	LogDebug("ViewWidget: Destructor called.");
 	delete mRenderCallback;
-	LogDebug("ViewWidget: Destructor completed.");
 }
 
 
 Classifier* ViewWidget::GetClassifier() const
 {
-	LogDebug("ViewWidget: GetClassifier() called.");
-	LogDebug("ViewWidget: GetClassifier() completed.");
 	return GetEngine()->GetActiveClassifier();
 }
 
@@ -64,7 +58,6 @@ Classifier* ViewWidget::GetClassifier() const
 // render frame
 void ViewWidget::paintGL()
 {
-	LogDebug("ViewWidget: paintGL() called.");
 	uint32 numMultiChannels = 0;
 	Classifier* classifier = GetClassifier();
 	if (classifier != NULL)
@@ -116,13 +109,11 @@ void ViewWidget::paintGL()
 
 	// post rendering
 	PostRendering();
-	LogDebug("ViewWidget: paintGL() completed.");
 }
 
 
 void ViewWidget::RenderCallback::Render(uint32 index, bool isHighlighted, double x, double y, double width, double height)
 {
-	LogDebug("ViewWidget::RenderCallback: Render() called for index %u.", index);
 	//Classifier* classifier = mViewWidget->GetClassifier();
 	ViewPlugin* plugin = mViewWidget->GetPlugin();
 
@@ -252,13 +243,11 @@ void ViewWidget::RenderCallback::Render(uint32 index, bool isHighlighted, double
 		mTempString.Format("%.2f", value);
 		RenderText( mTempString.AsChar(), GetOpenGLWidget()->GetDefaultFontSize(), textColor, areaStartX-textMargin, y, OpenGLWidget::ALIGN_MIDDLE | OpenGLWidget::ALIGN_RIGHT );
 	}
-	LogDebug("ViewWidget::RenderCallback: Render() completed.");
 }
 
 
 void ViewWidget::RenderCallback::RenderTimeline(double x, double y, double width, double height)
 {
-	LogDebug("ViewWidget::RenderCallback: RenderTimeline() called.");
 	// base class render
 	OpenGLWidgetCallback::RenderTimeline( x, y, width, height );
 
@@ -289,5 +278,4 @@ void ViewWidget::RenderCallback::RenderTimeline(double x, double y, double width
 	}
 	
 	OpenGLWidget2DHelpers::RenderTimeline( this, FromQtColor(color), timeRange, maxTime, areaStartX, y, areaWidth, height, mTempString, scaleInMins);
-	LogDebug("ViewWidget::RenderCallback: RenderTimeline() completed.");
 }
