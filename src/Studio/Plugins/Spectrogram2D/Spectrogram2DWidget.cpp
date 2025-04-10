@@ -94,8 +94,11 @@ void Spectrogram2DWidget::paintGL()
 	// initialize the painter and get the font metrics
 	QPainter painter(this);
 	mRenderCallback->SetPainter( &painter );
-	painter.setRenderHint(QPainter::Antialiasing);
-	painter.setRenderHint(QPainter::HighQualityAntialiasing);
+
+	// TODO make optional
+	// disable antialiasing for better performance
+	painter.setRenderHint(QPainter::Antialiasing, false);
+	painter.setRenderHint(QPainter::HighQualityAntialiasing, false);
 
 	// pre rendering
 	if (PreRendering() == false)
