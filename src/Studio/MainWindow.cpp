@@ -134,14 +134,6 @@ void MainWindow::Init()
 	LogDetailedInfo("Initializing Qt base manager ...");
 	GetQtBaseManager()->Init();
 
-	// Set OpenGL Core Profile for better performance on integrated GPUs
-	QSurfaceFormat format;
-	format.setDepthBufferSize(24);
-	format.setStencilBufferSize(8);
-	format.setVersion(3, 3); // OpenGL 3.3 Core Profile
-	format.setProfile(QSurfaceFormat::CoreProfile);
-	QSurfaceFormat::setDefaultFormat(format);
-
 	// create the network server
 	LogDetailedInfo("Initializing network components...");
 	mNetworkServer = new NetworkServer(STUDIO_NETWORKSERVER_TCP_PORT, STUDIO_NETWORKSERVER_UDP_PORT, STUDIO_NETWORKCLIENT_UDP_PORT);
