@@ -97,8 +97,8 @@ void Spectrogram2DWidget::paintGL()
 
 	// TODO make optional
 	// disable antialiasing for better performance
-	painter.setRenderHint(QPainter::Antialiasing, false);
-	painter.setRenderHint(QPainter::HighQualityAntialiasing, false);
+	//painter.setRenderHint(QPainter::Antialiasing, false);
+	//painter.setRenderHint(QPainter::HighQualityAntialiasing, false);
 
 	// pre rendering
 	if (PreRendering() == false)
