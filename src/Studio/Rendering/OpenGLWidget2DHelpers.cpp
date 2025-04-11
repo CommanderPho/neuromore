@@ -976,11 +976,10 @@ void OpenGLWidget2DHelpers::RenderSpectrum(OpenGLWidgetCallback* callback, Spect
 		callback->AddLine( lastX, lastY, color, x, y, color );
 	}
 
-	// render the lines
+// render the lines
 	const double lineWidth = 2.0;
 	callback->RenderLines(lineWidth);
 }
-
 
 // render spectrum
 void OpenGLWidget2DHelpers::RenderSpectrumChart(OpenGLWidgetCallback* callback, Spectrum* spectrum, const Color& color, uint32 minBinIndex, uint32 maxBinIndex, double rangeMin, double rangeMax, double xStart, double xEnd, double yStart, double yEnd, bool horizontalView, bool drawFromRight)
@@ -1002,65 +1001,54 @@ void OpenGLWidget2DHelpers::RenderSpectrumChart(OpenGLWidgetCallback* callback, 
 
 	const uint32 rangeBins = maxBinIndex - minBinIndex;
 
-	const double xRange = xEnd - xStart;
-	const double yRange = yEnd - yStart;
+	// Optimization flag and resolution factor
+	const bool mOptimizeSpectrumRendering = true; // Enable optimization
+	const uint32 resolutionFactor = mOptimizeSpectrumRendering ? 4 : 1; // Skip bins for lower resolution
 
 	if (horizontalView == false) {
 		Color color2 = FromQtColor( ToQColor(color).lighter(110) );
 		Color color1 = FromQtColor( ToQColor(color).darker(170) );
 		Color adjustedColor2;
 
-		const double binWidth = ((xRange)/(double)numBins)-1.0;
+		const double binWidth = ((xEnd - xStart) / (double)numBins) * resolutionFactor; // Adjust bin width based on resolution factor
 
-		for (uint32 i=1; i<=rangeBins; ++i)
+		for (uint32 i = 1; i <= rangeBins; i += resolutionFactor) // Skip bins based on resolution factor
 		{
-			const uint32 lastBinIndex	= minBinIndex + i - 1;
+			const uint32 lastBinIndex = minBinIndex + i - 1;
 
 			const double lastX = ClampedRemapRange(lastBinIndex, minBinIndex, maxBinIndex, xStart, xEnd);
 			const double lastY = ClampedRemapRange(spectrum->GetBin(lastBinIndex), rangeMin, rangeMax, yStart, yEnd);
 
-			//const double x		= ClampedRemapRange( binIndex, minBinIndex, endBinIndex, xStart, xEnd );
-			//const double y		= ClampedRemapRange( spectrum->GetBin(binIndex), rangeMin, rangeMax, yStart, yEnd );
-
 			float colorInterpolate = ClampedRemapRange(spectrum->GetBin(lastBinIndex), rangeMin, rangeMax, 0.0, 1.0);
-			adjustedColor2 = LinearInterpolate<Color>( color1, color2, colorInterpolate );
+			adjustedColor2 = LinearInterpolate<Color>(color1, color2, colorInterpolate);
 
 			OpenGLWidgetCallback::Rect rect;
 
 			rect.mColor1 = rect.mColor2 = color1;
 			rect.mColor3 = rect.mColor4 = adjustedColor2;
 
-			const double binHeight = yRange+lastY;
+			const double binHeight = (yEnd - yStart) + lastY;
 
-			if (binWidth > 1)
-			{
-				// 1
-				rect.mX1 = lastX;
-				rect.mY1 = yStart;
+			// Adjust rectangle size to avoid gaps
+			rect.mX1 = lastX;
+			rect.mY1 = yStart;
 
-				// 2
-				rect.mX2 = lastX + binWidth;
-				rect.mY2 = yStart;
+			rect.mX2 = lastX + binWidth;
+			rect.mY2 = yStart;
 
-				// 3
-				rect.mX3 = lastX + binWidth;
-				rect.mY3 = yStart + binHeight;
+			rect.mX3 = lastX + binWidth;
+			rect.mY3 = yStart + binHeight;
 
-				// 4
-				rect.mX4 = lastX;
-				rect.mY4 = yStart + binHeight;
+			rect.mX4 = lastX;
+			rect.mY4 = yStart + binHeight;
 
-				callback->AddRect( rect );
-			}
-			else
-				callback->AddLine( lastX, yStart, color1, lastX, yStart+binHeight, adjustedColor2 );
+			callback->AddRect(rect);
 		}
 	} else {
-		const double binWidth = ((yRange)/(double)numBins);
+		const double binHeight = ((yEnd - yStart) / (double)numBins) * resolutionFactor; // Adjust bin height based on resolution factor
 
-		for (uint32 i = 1; i <= rangeBins; ++i)
+		for (uint32 i = 1; i <= rangeBins; i += resolutionFactor) // Skip bins based on resolution factor
 		{
-
 			const uint32 lastBinIndex = minBinIndex + i - 1;
 
 			// Assign the color based on the frequency range
@@ -1078,40 +1066,34 @@ void OpenGLWidget2DHelpers::RenderSpectrumChart(OpenGLWidgetCallback* callback, 
 			rect.mColor2 = rect.mColor3 = barColor; // Bottom-right and Top-right
 
 			if (drawFromRight) {
-				// Bottom-left
+				// Adjust rectangle size to avoid gaps
 				rect.mX1 = std::max(xStart, xEnd - lastX);
 				rect.mY1 = lastY;
 
-				// Bottom-right
 				rect.mX2 = xEnd;
 				rect.mY2 = lastY;
 
-				// Top-right
 				rect.mX3 = xEnd;
-				rect.mY3 = lastY + binWidth;
+				rect.mY3 = lastY + binHeight;
 
-				// Top-left
 				rect.mX4 = std::max(xStart, xEnd - lastX);
-				rect.mY4 = lastY + binWidth;
+				rect.mY4 = lastY + binHeight;
 			} else {
-				// Bottom-left
+				// Adjust rectangle size to avoid gaps
 				rect.mX1 = xStart;
 				rect.mY1 = lastY;
 
-				// Bottom-right
 				rect.mX2 = std::min(xStart + lastX, xEnd);
 				rect.mY2 = lastY;
 
-				// Top-right
 				rect.mX3 = std::min(xStart + lastX, xEnd);
-				rect.mY3 = lastY + binWidth;
+				rect.mY3 = lastY + binHeight;
 
-				// Top-left
 				rect.mX4 = xStart;
-				rect.mY4 = lastY + binWidth;
+				rect.mY4 = lastY + binHeight;
 			}
 
-        	callback->AddRect(rect);
+			callback->AddRect(rect);
 		}
 	}
 

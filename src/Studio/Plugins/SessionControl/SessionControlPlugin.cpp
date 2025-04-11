@@ -291,12 +291,12 @@ void SessionControlPlugin::OnActiveClassifierChanged(Classifier* classifier)
 
 void SessionControlPlugin::OnNodeStarted(Graph* graph, SPNode* node)
 {
-	LogDetailedInfo("SessionControlPlugin: OnNodeStarted() called.");
+	LogDebug("SessionControlPlugin: OnNodeStarted() called.");
    if (mPreSessionWidget)
       if (node->GetType() == ChannelSelectorNode::TYPE_ID)
          if (node->GetBoolAttribute(ChannelSelectorNode::ATTRIB_QUICK_CONFIG))
             mPreSessionWidget->UpdateChannels((ChannelSelectorNode*)node);
-   LogDetailedInfo("SessionControlPlugin: OnNodeStarted() completed.");
+   LogDebug("SessionControlPlugin: OnNodeStarted() completed.");
 }
 
 void SessionControlPlugin::OnRemoveNode(Graph* graph, Node* node)
@@ -333,12 +333,12 @@ void SessionControlPlugin::OnRemoveDevice(Device* device)
 
 void SessionControlPlugin::UpdateStartButton()
 {
-	LogDetailedInfo("SessionControlPlugin: UpdateStartButton() called.");
+	LogDebug("SessionControlPlugin: UpdateStartButton() called.");
 	if (mPreSessionWidget == NULL)
 		return;
 
 	mPreSessionWidget->GetStartButton()->setEnabled(mCanStartSession);
-	LogDetailedInfo("SessionControlPlugin: UpdateStartButton() completed.");
+	LogDebug("SessionControlPlugin: UpdateStartButton() completed.");
 }
 
 
@@ -415,7 +415,7 @@ void SessionControlPlugin::OnSelectedChannelsChanged()
 
 void SessionControlPlugin::CheckStartRequirements()
 {
-	LogDetailedInfo("SessionControlPlugin: CheckStartRequirements() called.");
+	LogDebug("SessionControlPlugin: CheckStartRequirements() called.");
 	Experience* experience = GetEngine()->GetActiveExperience();
 	Classifier* classifier = GetEngine()->GetActiveClassifier();
 	StateMachine* stateMachine = GetEngine()->GetActiveStateMachine();
@@ -531,7 +531,7 @@ void SessionControlPlugin::CheckStartRequirements()
 		else
 			mSessionInfoWidget->RemoveInfo( designErrorInfo );
 	}
-	LogDetailedInfo("SessionControlPlugin: CheckStartRequirements() completed.");
+	LogDebug("SessionControlPlugin: CheckStartRequirements() completed.");
 }
 
 // start session
@@ -698,7 +698,6 @@ void SessionControlPlugin::Reset()
 void SessionControlPlugin::OnStop()
 {
 	LogDetailedInfo("SessionControlPlugin: OnStop() called.");
-	LogDetailedInfo("SessionControlPlugin::OnStop()");
 
 	mWhileSessionWidget->setEnabled(false);
 
@@ -738,9 +737,11 @@ void SessionControlPlugin::OnStop()
 	////////////////////////////////////////
 	// start backend parameter upload
 	////////////////////////////////////////
-	LogDetailedInfo("SessionControlPlugin::OnStop() - GetBackendInterface()->GetParameters()->Save");
+	LogDetailedInfo("SessionControlPlugin::OnStop() - GetBackendInterface()->GetParameters()->Save() called.");
 
 	GetBackendInterface()->GetParameters()->Save(*GetSessionUser(), *GetSession(), activeExperience, activeClassifier);
+
+	LogDetailedInfo("SessionControlPlugin::OnStop() - GetBackendInterface()->GetParameters()->Save() completed.");
 
 	////////////////////////////////////////
 	// create data chunk
