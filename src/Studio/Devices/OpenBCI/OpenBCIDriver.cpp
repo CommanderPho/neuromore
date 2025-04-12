@@ -446,7 +446,7 @@ bool OpenBCIAutoDetection::IsPortInUse(const String& portName)
         OpenBCIDeviceBase* device = mDriver->mDevices[i];
         if (device->GetSerialPortName() == portName)
         {
-            LogDetailedInfo("OpenBCIAutoDetection: skipping port %s (already in use)", portName.AsChar());
+            LogDebug("OpenBCIAutoDetection: skipping port %s (already in use)", portName.AsChar());
             return true;
         }
     }
