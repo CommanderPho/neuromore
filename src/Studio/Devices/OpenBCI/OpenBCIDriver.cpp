@@ -271,10 +271,6 @@ void OpenBCIAutoDetection::DetectDevices()
 		if (mBreak == true)
 			break;
 
-		// Before attempting to initialize a port, check if it is already in use
-		if (IsPortInUse(portNames[i]))
-			continue;
-
 		//
 		// Init Serial connection
 		//
@@ -436,21 +432,6 @@ void OpenBCIAutoDetection::DetectDevices()
 
 	// reset flag
 	mIsSearching = false;
-}
-
-bool OpenBCIAutoDetection::IsPortInUse(const String& portName)
-{
-    const uint32 numDevices = mDriver->mDevices.Size();
-    for (uint32 i = 0; i < numDevices; ++i)
-    {
-        OpenBCIDeviceBase* device = mDriver->mDevices[i];
-        if (device->GetSerialPortName() == portName)
-        {
-            LogDebug("OpenBCIAutoDetection: skipping port %s (already in use)", portName.AsChar());
-            return true;
-        }
-    }
-    return false;
 }
 
 
