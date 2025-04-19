@@ -30,6 +30,7 @@
 #include <EngineManager.h>
 #include <Core/EventHandler.h>
 #include <Core/Array.h>
+#include <unordered_set> // Include for maintaining the ignored ports list
 
 #include <QObject>
 #include <QThread>
@@ -81,6 +82,12 @@ class OpenBCIDriver : public QObject, public DeviceDriver, public Core::EventHan
 		void StopTest(Device* device) override;
 		bool IsTestRunning(Device* device) override;
 
+		// Method to clear ignored ports (optional, if needed)
+		void ClearIgnoredPorts() { mIgnoredPorts.clear(); }
+
+		// Provide access to ignored ports for auto-detection
+		const std::unordered_set<std::string>& GetIgnoredPorts() const { return mIgnoredPorts; }
+
 	private:
 
 		// for autodetection
@@ -88,12 +95,15 @@ class OpenBCIDriver : public QObject, public DeviceDriver, public Core::EventHan
 		QTimer*								mAutoDetectionTimer;
 		OpenBCIAutoDetection*				mAutoDetection;
 
-		// list to keep track of connected devices (index-matched with theh serial thread array below)
+		// list to keep track of connected devices (index-matched with the serial thread array below)
 		Core::Array<OpenBCIDeviceBase*>		mDevices;
 
 		// one thread per device
 		// TODO use one thread for all serial handlers
 		Core::Array<OpenBCISerialThread*>	mSerialHandlerThreads;
+
+		// list of ignored ports to prevent repeated reconnections
+		std::unordered_set<std::string>		mIgnoredPorts;
 
 };
 
@@ -134,6 +144,9 @@ class OpenBCISerialThread : public QThread
 		virtual ~OpenBCISerialThread() {};
 
 		void run() override;
+
+		// Add declaration for GetPortName
+		const char* GetPortName() const;
 
 	private:
 		OpenBCIDeviceBase*	mDevice;

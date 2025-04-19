@@ -28,6 +28,7 @@
 #include "OpenBCIDriver.h"
 #include "OpenBCISerialHandler.h"
 #include <Devices/OpenBCI/OpenBCIDevices.h>
+#include <unordered_set>
 
 #ifdef INCLUDE_DEVICE_OPENBCI
 
@@ -173,6 +174,9 @@ void OpenBCIDriver::AddDevice(OpenBCIDeviceBase* device, const char* serialPort)
 {
 	mDevices.Add(device);
 
+	// Add the port to the ignored ports list
+	mIgnoredPorts.insert(serialPort);
+
 	// create serial thread for the device (uses the serial handler)
 	OpenBCISerialThread* serialThread = new OpenBCISerialThread(device, serialPort);
 	serialThread->start();
@@ -196,15 +200,18 @@ void OpenBCIDriver::OnRemoveDevice(Device* device)
 	if (index == CORE_INVALIDINDEX32)
 		return;
 
-	// remove device from device listr
+	// remove device from device list
 	mDevices.RemoveByValue(openBCIDevice);
 
-	// stop and remove remove serial thread
+	// stop and remove serial thread
 	OpenBCISerialThread* serialThread = mSerialHandlerThreads[index];
 	serialThread->quit();
 	serialThread->wait();
 	mSerialHandlerThreads.Remove(index);
 	delete serialThread;
+
+	// Remove the port from the ignored ports list
+	mIgnoredPorts.erase(serialThread->GetPortName());
 }
 
 
@@ -224,7 +231,6 @@ bool OpenBCIDriver::IsTestRunning(Device* device)
 {
    return device ? device->IsTestRunning() : false;
 }
-
 
 // run autodetection once
 void OpenBCIAutoDetection::DetectDevices()
@@ -267,6 +273,13 @@ void OpenBCIAutoDetection::DetectDevices()
 	const uint32 numPorts = portNames.Size();
 	for (uint32 i=0; i<numPorts; ++i)
 	{
+		 // Skip ports that are in the ignored ports list
+		if (mDriver->GetIgnoredPorts().find(portNames[i].AsChar()) != mDriver->GetIgnoredPorts().end())
+		{
+			LogDebug("OpenBCIAutoDetection: Skipping ignored port %s ...", portNames[i].AsChar());
+			continue;
+		}
+
 		// exit early if thread is to be stopped
 		if (mBreak == true)
 			break;
@@ -457,5 +470,9 @@ void OpenBCISerialThread::run()
 
 }
 
+const char* OpenBCISerialThread::GetPortName() const
+{
+    return mPortName.AsChar();
+}
 
 #endif
